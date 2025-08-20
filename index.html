@@ -1,43 +1,40 @@
-<div id="chat">
-  <div id="chat-log" style="height:200px; overflow:auto; border:1px solid #ccc; padding:8px;"></div>
-  <input id="chat-input" placeholder="Type a message..." style="width:70%;">
-  <button onclick="sendMessage()">Send</button>
-  <hr>
-  <input id="screenshot-input" placeholder="Enter URL for screenshot" style="width:70%;">
-  <button onclick="takeScreenshot()">Screenshot</button>
-  <div id="screenshot-output" style="margin-top:10px;"></div>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>API Key Scanner</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin: 30px; }
+    #drop-area {
+      border: 3px dashed #888;
+      border-radius: 12px;
+      padding: 40px;
+      width: 60%;
+      margin: auto;
+      color: #555;
+    }
+    #results {
+      margin-top: 20px;
+      white-space: pre-wrap;
+      text-align: left;
+      width: 60%;
+      margin-left: auto;
+      margin-right: auto;
+      background: #f9f9f9;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔍 API Key Scanner</h1>
+  <div id="drop-area">
+    <p>Drag & drop files here, or click to select</p>
+    <input type="file" id="fileElem" multiple style="display:none">
+  </div>
+  <div id="results"></div>
 
-<script type="module">
-import { chatWithGPT, screenshotURL } from 'backend/chat';
-
-async function sendMessage() {
-  const input = document.getElementById('chat-input');
-  const message = input.value.trim();
-  if (!message) return;
-  input.value = "";
-
-  // Show user message
-  document.getElementById('chat-log').innerHTML += `<p><b>You:</b> ${message}</p>`;
-
-  // Send to backend
-  const result = await chatWithGPT(message);
-  const reply = result.choices[0].message.content;
-  document.getElementById('chat-log').innerHTML += `<p><b>Bot:</b> ${reply}</p>`;
-}
-
-async function takeScreenshot() {
-  const url = document.getElementById('screenshot-input').value.trim();
-  if (!url) return;
-
-  document.getElementById('screenshot-output').innerHTML = "Loading screenshot...";
-
-  try {
-    const base64Image = await screenshotURL(url);
-    document.getElementById('screenshot-output').innerHTML = `<img src="data:image/png;base64,${base64Image}" style="max-width:100%;">`;
-  } catch (err) {
-    document.getElementById('screenshot-output').innerHTML = "Failed to take screenshot.";
-    console.error(err);
-  }
-}
-</script>
+  <script src="scanner.js"></script>
+</body>
+</html>
