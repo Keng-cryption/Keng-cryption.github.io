@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ASL Translator with Skeleton</title>
+<title>ASL Translator</title>
 <style>
   body { font-family: Arial; background: #1E2229; color: #fff; text-align: center; padding-top: 20px; }
   canvas { border-radius: 8px; border: 2px solid #333; }
@@ -14,7 +14,7 @@
 </style>
 </head>
 <body>
-<h1>Live ASL Translation with Skeleton</h1>
+<h1>Live ASL Translator with Skeleton</h1>
 <button id="clearBtn">Clear Word</button>
 <br><br>
 <canvas id="canvas" width="640" height="480"></canvas>
@@ -25,6 +25,7 @@
 import { Hands } from "https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js";
 import { drawConnectors, drawLandmarks } from "https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js";
 
+// Canvas and UI
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const predictionEl = document.getElementById("prediction");
@@ -36,9 +37,9 @@ let lastLetter = "";
 let lastCheck = 0;
 const interval = 1000;
 
-clearBtn.addEventListener("click", ()=>{ currentWord=""; lastLetter=""; });
+clearBtn.addEventListener("click", () => { currentWord=""; lastLetter=""; });
 
-// Letter definitions
+// ASL letter patterns
 const LETTER_SIGNS = {
   'A':  { thumb: true, fingers: [0,0,0,0] },
   'B':  { thumb: false, fingers: [1,1,1,1] },
@@ -66,7 +67,7 @@ const LETTER_SIGNS = {
   ' ':  { thumb: true, fingers: [1,1,1,1] }
 };
 
-// Finger utilities
+// Finger detection
 function fingerUp(lm, tip, pip) { return lm[tip].y < lm[pip].y; }
 function getFingerStates(lm) {
   return {
@@ -119,7 +120,7 @@ async function detectHands() {
   loop();
 }
 
-// Draw skeleton & update prediction
+// Draw skeleton + update letters
 function onResults(results) {
   ctx.clearRect(0,0,canvas.width,canvas.height);
   ctx.drawImage(video,0,0,canvas.width,canvas.height);
