@@ -1,93 +1,52 @@
-let currentWord = "";
-let lastLetter = "";
+const video = document.getElementById("webcam");
+const status = document.getElementById("status");
+const predictionEl = document.getElementById("prediction");
 
-function clearWord() {
-  currentWord = "";
-  lastLetter = "";
-  document.getElementById("word").textContent = "Current Word: ";
-  document.getElementById("fingers").textContent = "Finger State: ";
+// Placeholder for your ASL model
+// Replace this with your actual ML/ASL inference code
+function mockASLPrediction(frame) {
+  // For testing: randomly return a letter
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const randomIndex = Math.floor(Math.random() * letters.length);
+  return letters[randomIndex];
 }
 
-// Finger detection helpers
-function fingerUp(lm, tip, pip) { return lm[tip].y < lm[pip].y; }
-function getFingerStates(lm) {
-  return {
-    thumb: lm[4].x < lm[3].x,
-    index: fingerUp(lm, 8, 6),
-    middle: fingerUp(lm, 12, 10),
-    ring: fingerUp(lm, 16, 14),
-    pinky: fingerUp(lm, 20, 18)
-  };
-}
+// Initialize camera
+async function initCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.srcObject = stream;
+    await video.play();
+    status.textContent = "Camera is live!";
 
-const LETTER_SIGNS = {
-  'A': {thumb:true,fingers:[0,0,0,0]}, 'B': {thumb:false,fingers:[1,1,1,1]},
-  'C': {thumb:true,fingers:[1,0,0,1]}, 'D': {thumb:false,fingers:[1,0,0,0]},
-  'E': {thumb:false,fingers:[0,0,0,0]}, 'F': {thumb:true,fingers:[0,1,1,1]},
-  'G': {thumb:true,fingers:[0,1,1,0]}, 'H': {thumb:false,fingers:[1,1,0,0]},
-  'I': {thumb:false,fingers:[0,0,0,1]}, 'K': {thumb:false,fingers:[1,0,1,1]},
-  'L': {thumb:true,fingers:[1,0,0,0]}, 'M': {thumb:false,fingers:[0,1,1,0]},
-  'N': {thumb:true,fingers:[1,1,1,0]}, 'O': {thumb:true,fingers:[0,0,1,1]},
-  'P': {thumb:true,fingers:[1,0,1,1]}, 'Q': {thumb:true,fingers:[0,1,0,0]},
-  'R': {thumb:false,fingers:[1,1,0,1]}, 'S': {thumb:false,fingers:[0,1,0,1]},
-  'T': {thumb:false,fingers:[0,0,1,0]}, 'U': {thumb:true,fingers:[1,1,0,1]},
-  'V': {thumb:true,fingers:[1,1,0,0]}, 'W': {thumb:false,fingers:[1,1,1,0]},
-  'Y': {thumb:true,fingers:[0,0,0,1]}, ' ': {thumb:true,fingers:[1,1,1,1]},
-};
-
-function classifyLetter(f) {
-  const fingersArr = [Number(f.index), Number(f.middle), Number(f.ring), Number(f.pinky)];
-  for (const [letter, pattern] of Object.entries(LETTER_SIGNS)) {
-    if (f.thumb === pattern.thumb && JSON.stringify(fingersArr) === JSON.stringify(pattern.fingers)) {
-      return letter;
-    }
+    // Start ASL detection loop
+    detectASL();
+  } catch (err) {
+    console.error("Error accessing camera:", err);
+    status.textContent = `Camera error: ${err.message}`;
   }
-  return null;
 }
 
-// Setup MediaPipe Hands
-const videoElement = document.getElementById("video");
-const canvasElement = document.getElementById("canvas");
-const ctx = canvasElement.getContext("2d");
+// ASL detection loop
+function detectASL() {
+  const canvas = document.createElement("canvas");
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext("2d");
 
-const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-hands.setOptions({maxNumHands:1, minDetectionConfidence:0.5, minTrackingConfidence:0.5});
+  function loop() {
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      // Draw current video frame to canvas
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-hands.onResults(results => {
-  ctx.save();
-  ctx.clearRect(0,0,canvasElement.width,canvasElement.height);
-  
-  // Draw video frame
-  ctx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-
-  if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-    const lm = results.multiHandLandmarks[0];
-    const fingers = getFingerStates(lm);
-
-    const fingerList = [Number(fingers.thumb), Number(fingers.index), Number(fingers.middle),
-                        Number(fingers.ring), Number(fingers.pinky)];
-    document.getElementById("fingers").textContent = "Finger State: " + fingerList.join(", ");
-
-    const letter = classifyLetter(fingers);
-    if (letter && letter !== lastLetter) {
-      currentWord += letter;
-      lastLetter = letter;
-    } else if (!letter) {
-      lastLetter = "";
+      // Here you would pass canvas/frame to your ASL model
+      const predictedLetter = mockASLPrediction(canvas); // replace with real model
+      predictionEl.textContent = `Prediction: ${predictedLetter}`;
     }
-    document.getElementById("word").textContent = "Current Word: " + currentWord;
-
-    // Draw hand landmarks
-    drawConnectors(ctx, lm, HAND_CONNECTIONS, {color:'#00FF00', lineWidth:2});
-    drawLandmarks(ctx, lm, {color:'#FF0000', lineWidth:1});
+    requestAnimationFrame(loop);
   }
-  ctx.restore();
-});
+  loop();
+}
 
-// Start camera
-const camera = new Camera(videoElement, {
-  onFrame: async () => { await hands.send({image: videoElement}); },
-  width: 480,
-  height: 360
-});
-camera.start();
+// Start everything
+window.addEventListener("load", initCamera);
