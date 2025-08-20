@@ -2,32 +2,70 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Camera Access Demo</title>
+  <title>ASL Translator</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Open Sans', sans-serif;
+      background-color: #1E2229;
+      color: #fff;
       text-align: center;
-      margin: 40px;
-      background: #f4f4f4;
+      padding-top: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+    }
+    .main-content {
+      background-color: rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+      margin-top: 20px;
+    }
+    h1 {
+      font-size: 2.5em;
+      font-weight: bold;
+    }
+    p, button {
+      font-size: 1.3em;
+      margin-top: 10px;
+      color: #eee;
     }
     video {
-      border: 3px solid #333;
-      border-radius: 10px;
       margin-top: 20px;
-      width: 480px;
-      height: 360px;
-      background: black;
+      border-radius: 12px;
+      box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+      width: 640px;
+      height: 480px;
     }
-    #status {
-      margin-top: 15px;
+    .clear-button {
+      background-color: #1E7A54;
+      border: none;
+      padding: 10px 20px;
+      font-size: 1.5em;
       font-weight: bold;
+      cursor: pointer;
+    }
+    .clear-button:hover {
+      background-color: #2C3E50;
     }
   </style>
 </head>
 <body>
-  <h1>📷 Camera Preview</h1>
-  <video id="video" autoplay playsinline muted></video>
-  <p id="status">Requesting camera access...</p>
+  <div class="title-area">
+    <h1>Live ASL Translation</h1>
+    <button class="clear-button" onclick="clearWord()">Clear</button>
+  </div>
+  <div class="main-content">
+    <p id="word">Current Word: </p>
+    <p id="fingers">Finger State: </p>
+    <video id="video" autoplay playsinline></video>
+  </div>
+
+  <!-- Load MediaPipe Hands -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.min.js"></script>
 
   <script src="script.js"></script>
 </body>
