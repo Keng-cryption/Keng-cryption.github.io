@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ASL Translator</title>
+<title>ASL Translator with Skeleton</title>
 <style>
   body { font-family: Arial; background: #1E2229; color: #fff; text-align: center; padding-top: 20px; }
-  video { border-radius: 8px; border: 2px solid #333; width: 640px; height: 480px; }
+  canvas { border-radius: 8px; border: 2px solid #333; }
   #prediction { font-size: 2em; margin-top: 10px; color: #00ff99; }
   #fingers { margin-top: 5px; }
   button { font-size: 1.2em; padding: 10px 20px; margin-top: 10px; cursor: pointer; border-radius: 5px; border: none; background-color: #1E7A54; color: #fff; }
@@ -14,9 +14,10 @@
 </style>
 </head>
 <body>
-<h1>Live ASL Translation</h1>
+<h1>Live ASL Translation with Skeleton</h1>
 <button id="clearBtn">Clear Word</button>
-<video id="webcam" autoplay playsinline></video>
+<br><br>
+<canvas id="canvas" width="640" height="480"></canvas>
 <p id="prediction">Current Word: </p>
 <p id="fingers">Finger State: </p>
 
@@ -24,7 +25,8 @@
 import { Hands } from "https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js";
 import { drawConnectors, drawLandmarks } from "https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js";
 
-const video = document.getElementById("webcam");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 const predictionEl = document.getElementById("prediction");
 const fingersEl = document.getElementById("fingers");
 const clearBtn = document.getElementById("clearBtn");
@@ -32,7 +34,9 @@ const clearBtn = document.getElementById("clearBtn");
 let currentWord = "";
 let lastLetter = "";
 let lastCheck = 0;
-const interval = 1000; // ms
+const interval = 1000;
+
+clearBtn.addEventListener("click", ()=>{ currentWord=""; lastLetter=""; });
 
 // Letter definitions
 const LETTER_SIGNS = {
@@ -62,11 +66,8 @@ const LETTER_SIGNS = {
   ' ':  { thumb: true, fingers: [1,1,1,1] }
 };
 
-// Utility to detect finger states
-function fingerUp(lm, tip, pip) {
-  return lm[tip].y < lm[pip].y;
-}
-
+// Finger utilities
+function fingerUp(lm, tip, pip) { return lm[tip].y < lm[pip].y; }
 function getFingerStates(lm) {
   return {
     thumb: lm[4].x < lm[3].x,
@@ -76,8 +77,6 @@ function getFingerStates(lm) {
     pinky: fingerUp(lm,20,18)
   };
 }
-
-// Classify letter
 function classifyLetter(f) {
   const thumb = f.thumb;
   const fingers = [f.index,f.middle,f.ring,f.pinky].map(b=>b?1:0);
@@ -87,10 +86,11 @@ function classifyLetter(f) {
   return null;
 }
 
-// Clear button
-clearBtn.addEventListener("click", ()=>{ currentWord=""; lastLetter=""; });
+// Webcam setup
+const video = document.createElement("video");
+video.autoplay = true;
+video.playsInline = true;
 
-// Initialize webcam
 async function initCamera() {
   const stream = await navigator.mediaDevices.getUserMedia({video:true});
   video.srcObject = stream;
@@ -98,7 +98,7 @@ async function initCamera() {
 }
 await initCamera();
 
-// Initialize MediaPipe Hands
+// MediaPipe Hands
 const hands = new Hands({
   locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
 });
@@ -106,24 +106,31 @@ hands.setOptions({maxNumHands:1,minDetectionConfidence:0.5,minTrackingConfidence
 hands.onResults(onResults);
 
 async function detectHands() {
-  const canvas = document.createElement("canvas");
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  const ctx = canvas.getContext("2d");
+  const tmpCanvas = document.createElement("canvas");
+  tmpCanvas.width = video.videoWidth;
+  tmpCanvas.height = video.videoHeight;
+  const tmpCtx = tmpCanvas.getContext("2d");
 
   async function loop() {
-    ctx.drawImage(video,0,0,canvas.width,canvas.height);
-    await hands.send({image: canvas});
+    tmpCtx.drawImage(video,0,0,tmpCanvas.width,tmpCanvas.height);
+    await hands.send({image: tmpCanvas});
     requestAnimationFrame(loop);
   }
   loop();
 }
 
+// Draw skeleton & update prediction
 function onResults(results) {
+  // Draw video
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(video,0,0,canvas.width,canvas.height);
+
   if(results.multiHandLandmarks && results.multiHandLandmarks.length>0){
     const lm = results.multiHandLandmarks[0];
-    const fingers = getFingerStates(lm);
+    drawConnectors(ctx, lm, Hands.HAND_CONNECTIONS, {color:"#00FF00", lineWidth:3});
+    drawLandmarks(ctx, lm, {color:"#FF0000", lineWidth:2});
 
+    const fingers = getFingerStates(lm);
     const now = Date.now();
     if(now - lastCheck > interval){
       lastCheck = now;
@@ -131,18 +138,14 @@ function onResults(results) {
       if(letter && letter!==lastLetter){
         currentWord += letter;
         lastLetter = letter;
-      } else if(!letter){
-        lastLetter="";
-      }
+      } else if(!letter){ lastLetter=""; }
     }
 
-    fingersEl.textContent = "Finger State: "+
-      [fingers.thumb,fingers.index,fingers.middle,fingers.ring,fingers.pinky].map(b=>b?1:0).join(",");
+    fingersEl.textContent = "Finger State: "+[fingers.thumb,fingers.index,fingers.middle,fingers.ring,fingers.pinky].map(b=>b?1:0).join(",");
     predictionEl.textContent = "Current Word: "+currentWord;
   }
 }
 
-// Start detection
 detectHands();
 </script>
 </body>
