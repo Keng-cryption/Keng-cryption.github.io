@@ -2,33 +2,39 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Camera Access Demo</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 40px;
-      background: #f4f4f4;
-    }
-    video {
-      border: 3px solid #333;
-      border-radius: 10px;
-      margin-top: 20px;
-      width: 480px;
-      height: 360px;
-      background: black;
-    }
-    #status {
-      margin-top: 15px;
-      font-weight: bold;
-    }
-  </style>
+  <title>Camera Debug Demo</title>
 </head>
 <body>
-  <h1>📷 Camera Preview</h1>
-  <video id="video" autoplay playsinline muted></video>
-  <p id="status">Requesting camera access...</p>
+  <h1>📷 Camera Debug</h1>
+  <video id="video" autoplay playsinline muted width="480" height="360" style="border:2px solid black;background:black;"></video>
+  <p id="status">Requesting camera...</p>
 
-  <script src="script.js"></script>
+  <script>
+    async function initCamera() {
+      const video = document.getElementById("video");
+      const status = document.getElementById("status");
+
+      try {
+        console.log("Requesting camera...");
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        console.log("Stream received:", stream);
+
+        video.srcObject = stream;
+
+        video.onloadedmetadata = () => {
+          video.play();
+          status.textContent = "✅ Camera is running!";
+          status.style.color = "green";
+          console.log("Camera started");
+        };
+      } catch (err) {
+        status.textContent = "❌ Error: " + err.name + " - " + err.message;
+        status.style.color = "red";
+        console.error("Camera error:", err);
+      }
+    }
+
+    initCamera();
+  </script>
 </body>
 </html>
