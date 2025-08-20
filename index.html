@@ -1,74 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>GitHub API Key Scanner</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitHub API Key Scanner</title>
+<style>
+  body { font-family: Arial, sans-serif; padding: 20px; }
+  input, button { padding: 10px; font-size: 1em; }
+  #results { margin-top: 20px; white-space: pre-wrap; max-height: 600px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; }
+</style>
 </head>
 <body>
-  <h2>GitHub Repo API Key Scanner</h2>
-  <input type="text" id="repoUrl" placeholder="Enter GitHub repo URL">
-  <button id="scanBtn">Scan Repo</button>
-  <pre id="output"></pre>
+<h2>Scan a GitHub Repo for API Keys</h2>
+<input type="text" id="repoUrl" placeholder="Enter GitHub repo URL" size="60">
+<button id="scanBtn">Scan Repo</button>
+<div id="results"></div>
 
-  <script>
-    async function scanRepo(repoUrl) {
-      const output = document.getElementById('output');
-      output.textContent = "Scanning...";
+<script>
+document.getElementById('scanBtn').addEventListener('click', async () => {
+    const url = document.getElementById('repoUrl').value.trim();
+    const resultsDiv = document.getElementById('results');
+    resultsDiv.textContent = 'Scanning repo... This may take a while.';
 
-      try {
-        // Extract owner and repo from URL
-        const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
-        if (!match) throw new Error("Invalid GitHub URL");
-        const owner = match[1];
-        const repo = match[2];
-
-        // Fetch all files in repo recursively
-        const files = await fetchRepoContents(owner, repo);
-        let results = [];
-
-        for (const file of files) {
-          if (file.type === "file") {
-            const res = await fetch(file.download_url);
-            const text = await res.text();
-
-            // Simple regex to detect API keys / tokens / secrets
-            const keyPattern = /(api[_-]?key|secret|token)["']?\s*[:=]\s*["'][^"']+["']/gi;
-            const matches = text.match(keyPattern);
-            if (matches) {
-              results.push(`Found in ${file.path}:\n  ${matches.join("\n  ")}`);
-            }
-          }
-        }
-
-        output.textContent = results.length ? results.join("\n\n") : "No API keys found.";
-
-      } catch (err) {
-        output.textContent = "Error: " + err.message;
-      }
-    }
-
-    async function fetchRepoContents(owner, repo, path = "") {
-      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-      const res = await fetch(apiUrl);
-      if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
-      const data = await res.json();
-
-      let allFiles = [];
-      for (const item of data) {
-        if (item.type === "dir") {
-          const subFiles = await fetchRepoContents(owner, repo, item.path);
-          allFiles = allFiles.concat(subFiles);
+    try {
+        const res = await fetch('/scan-repo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ repoUrl: url })
+        });
+        const data = await res.json();
+        if (data.error) {
+            resultsDiv.textContent = 'Error: ' + data.error;
         } else {
-          allFiles.push(item);
+            resultsDiv.textContent = data.results.join('\n\n');
         }
-      }
-      return allFiles;
+    } catch (err) {
+        resultsDiv.textContent = 'Error: ' + err.message;
     }
-
-    document.getElementById('scanBtn').addEventListener('click', () => {
-      const url = document.getElementById('repoUrl').value;
-      scanRepo(url);
-    });
-  </script>
+});
+</script>
 </body>
 </html>
