@@ -11,10 +11,13 @@
       background: #1E2229;
       color: #fff;
     }
-    video, canvas {
+    #container {
+      position: relative;
+      display: inline-block;
+    }
+    canvas {
       border: 3px solid #333;
       border-radius: 10px;
-      margin-top: 20px;
       width: 480px;
       height: 360px;
       background: black;
@@ -35,14 +38,18 @@
       cursor: pointer;
     }
     button:hover { background-color: #2C3E50; }
+    /* Hide the video element */
+    #video {
+      display: none;
+    }
   </style>
 </head>
 <body>
   <h1>🖐 Live ASL Translator</h1>
   <button onclick="clearWord()">Clear</button>
-  <div>
+  <div id="container">
     <video id="video" autoplay playsinline muted></video>
-    <canvas id="canvas"></canvas>
+    <canvas id="canvas" width="480" height="360"></canvas>
   </div>
   <p id="word">Current Word: </p>
   <p id="fingers">Finger State: </p>
