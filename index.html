@@ -1,28 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>API Key Scanner</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    #drop-area {
-      border: 2px dashed #ccc;
-      border-radius: 10px;
-      padding: 40px;
-      text-align: center;
-      color: #666;
-    }
-    #drop-area.highlight { border-color: #6c6; color: #000; }
-    #results { margin-top: 20px; white-space: pre-wrap; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitHub API Key Scanner</title>
+<style>
+  body { font-family: Arial, sans-serif; padding: 20px; }
+  input, button { padding: 10px; font-size: 1em; }
+  #results { margin-top: 20px; white-space: pre-wrap; }
+</style>
 </head>
 <body>
-  <h2>Drag and Drop Files to Scan for API Keys</h2>
-  <div id="drop-area">Drop files here or click to select</div>
-  <input type="file" id="fileElem" multiple style="display:none">
-  <div id="results"></div>
+<h2>Scan a GitHub Repo for API Keys</h2>
+<input type="text" id="repoUrl" placeholder="Enter GitHub repo URL" size="50">
+<button id="scanBtn">Scan Repo</button>
+<div id="results"></div>
 
-  <script src="scanner.js"></script>
+<script>
+document.getElementById('scanBtn').addEventListener('click', async () => {
+    const url = document.getElementById('repoUrl').value.trim();
+    const resultsDiv = document.getElementById('results');
+    resultsDiv.textContent = 'Scanning repo... This may take a few seconds.';
+    
+    try {
+        const res = await fetch('/scan-repo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ repoUrl: url })
+        });
+        const data = await res.json();
+        if (data.error) {
+            resultsDiv.textContent = 'Error: ' + data.error;
+        } else {
+            resultsDiv.textContent = data.results.join('\n\n');
+        }
+    } catch (err) {
+        resultsDiv.textContent = 'Error: ' + err.message;
+    }
+});
+</script>
 </body>
 </html>
