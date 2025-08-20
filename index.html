@@ -1,79 +1,34 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>API Key Scanner</title>
+  <title>Camera Access Demo</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      margin: 30px;
-      background: var(--bg);
-      color: var(--fg);
-      transition: background 0.2s, color 0.2s;
+      margin: 40px;
+      background: #f4f4f4;
     }
-    :root {
-      --bg: #ffffff;
-      --fg: #222222;
-      --box: #f9f9f9;
-      --border: #ddd;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #121212;
-        --fg: #f5f5f5;
-        --box: #1e1e1e;
-        --border: #333;
-      }
-    }
-    #drop-area {
-      border: 3px dashed #888;
-      border-radius: 12px;
-      padding: 40px;
-      width: 90%;
-      max-width: 700px;
-      margin: auto;
-      color: #555;
-      cursor: pointer;
-    }
-    #results {
+    video {
+      border: 3px solid #333;
+      border-radius: 10px;
       margin-top: 20px;
-      white-space: pre-wrap;
-      text-align: left;
-      width: 90%;
-      max-width: 700px;
-      margin-left: auto;
-      margin-right: auto;
-      background: var(--box);
-      padding: 15px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      font-family: monospace;
-      font-size: 14px;
+      width: 480px;
+      height: 360px;
+      background: black;
     }
-    #copyBtn {
-      margin-top: 10px;
-      padding: 8px 16px;
-      border-radius: 6px;
-      border: none;
-      background: #007bff;
-      color: white;
-      cursor: pointer;
-    }
-    #copyBtn:hover {
-      background: #0056cc;
+    #status {
+      margin-top: 15px;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <h1>🔍 API Key Scanner</h1>
-  <div id="drop-area">
-    <p>Drag & drop files here, or click to select</p>
-    <input type="file" id="fileElem" multiple style="display:none">
-  </div>
-  <div id="results">Drop a file to begin scanning…</div>
-  <button id="copyBtn" style="display:none;">Copy Report</button>
+  <h1>📷 Camera Preview</h1>
+  <video id="video" autoplay playsinline muted></video>
+  <p id="status">Requesting camera access...</p>
 
-  <script src="scanner.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
