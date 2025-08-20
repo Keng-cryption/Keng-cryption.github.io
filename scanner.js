@@ -1,6 +1,10 @@
-const dropArea = document.getElementById("drop-area");
-const fileInput = document.getElementById("fileElem");
-const resultsDiv = document.getElementById("results");
+// server.js
+const express = require('express');
+const fetch = require('node-fetch'); // npm i node-fetch@2
+const app = express();
+app.use(express.json());
+
+const PORT = process.env.PORT || 3000;
 
 // Regex patterns for API keys
 const API_KEY_PATTERNS = {
@@ -12,55 +16,51 @@ const API_KEY_PATTERNS = {
     "Generic Hex Key": /[A-Fa-f0-9]{32,64}/g
 };
 
-function preventDefaults(e) {
-  e.preventDefault();
-  e.stopPropagation();
-}
+app.post('/scan-repo', async (req, res) => {
+    const { repoUrl } = req.body;
+    if (!repoUrl) return res.json({ error: 'No repo URL provided' });
 
-function highlight() { dropArea.classList.add('highlight'); }
-function unhighlight() { dropArea.classList.remove('highlight'); }
+    try {
+        // Extract owner and repo
+        const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+        if (!match) return res.json({ error: 'Invalid GitHub repo URL' });
+        const owner = match[1];
+        const repo = match[2];
 
-['dragenter','dragover','dragleave','drop'].forEach(eventName => {
-  dropArea.addEventListener(eventName, preventDefaults, false)
-});
+        // Get repo tree from GitHub API (only master/main branch)
+        const treeRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/HEAD?recursive=1`);
+        const treeData = await treeRes.json();
+        if (!treeData.tree) return res.json({ error: 'Could not fetch repo files' });
 
-['dragenter','dragover'].forEach(eventName => {
-  dropArea.addEventListener(eventName, highlight, false)
-});
+        const results = [];
 
-['dragleave','drop'].forEach(eventName => {
-  dropArea.addEventListener(eventName, unhighlight, false)
-});
+        // Loop through files
+        for (const file of treeData.tree) {
+            if (file.type !== 'blob') continue; // skip directories
+            try {
+                const fileRes = await fetch(file.url);
+                const fileData = await fileRes.json();
+                const content = Buffer.from(fileData.content || '', 'base64').toString('utf-8');
 
-dropArea.addEventListener('click', () => fileInput.click());
-fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+                const findings = [];
+                for (const [name, pattern] of Object.entries(API_KEY_PATTERNS)) {
+                    if (pattern.test(content)) findings.push(name);
+                }
 
-dropArea.addEventListener('drop', e => {
-  const dt = e.dataTransfer;
-  handleFiles(dt.files);
-});
-
-function handleFiles(files) {
-  resultsDiv.textContent = '';
-  Array.from(files).forEach(file => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      const content = e.target.result;
-      const findings = [];
-      for (const [name, pattern] of Object.entries(API_KEY_PATTERNS)) {
-        if (pattern.test(content)) {
-          findings.push(name);
+                if (findings.length) {
+                    results.push(`[!] ${file.path} contains possible API keys:\n - ${findings.join('\n - ')}`);
+                } else {
+                    results.push(`[✓] ${file.path}: No API keys found`);
+                }
+            } catch (err) {
+                results.push(`[x] Error reading ${file.path}`);
+            }
         }
-      }
-      if (findings.length) {
-        resultsDiv.textContent += `[!] ${file.name} contains possible API keys:\n - ${findings.join('\n - ')}\n\n`;
-      } else {
-        resultsDiv.textContent += `[✓] ${file.name}: No API keys found\n\n`;
-      }
-    };
-    reader.onerror = e => {
-      resultsDiv.textContent += `[x] Error reading ${file.name}\n\n`;
-    };
-    reader.readAsText(file);
-  });
-}
+
+        res.json({ results });
+    } catch (err) {
+        res.json({ error: err.message });
+    }
+});
+
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
