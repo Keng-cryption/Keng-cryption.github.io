@@ -1,107 +1,103 @@
-// Regex patterns for API keys
-const patterns = {
-  "OpenAI": /sk-[A-Za-z0-9]{32,}/g,
-  "Google API": /AIza[0-9A-Za-z\-_]{35}/g,
-  "AWS Access Key": /AKIA[0-9A-Z]{16}/g,
-  "GitHub Token": /ghp_[0-9a-zA-Z]{36}/g,
-  "Slack Token": /xox[baprs]-[0-9A-Za-z-]{10,48}/g,
-  "Stripe Key": /sk_live_[0-9a-zA-Z]{24,}/g,
-  "Generic Hex Key": /\b[A-Fa-f0-9]{32,64}\b/g
+let currentWord = "";
+let lastLetter = "";
+let videoElement = document.getElementById("video");
+
+function clearWord() {
+  currentWord = "";
+  document.getElementById("word").textContent = "Current Word: ";
+  document.getElementById("fingers").textContent = "Finger State: ";
+}
+
+function fingerUp(lm, tip, pip) {
+  return lm[tip].y < lm[pip].y;
+}
+
+function getFingerStates(lm) {
+  return {
+    thumb: lm[4].x < lm[3].x,
+    index: fingerUp(lm, 8, 6),
+    middle: fingerUp(lm, 12, 10),
+    ring: fingerUp(lm, 16, 14),
+    pinky: fingerUp(lm, 20, 18)
+  };
+}
+
+const LETTER_SIGNS = {
+  'A': { thumb: true,  fingers: [0,0,0,0] },
+  'B': { thumb: false, fingers: [1,1,1,1] },
+  'C': { thumb: true,  fingers: [1,0,0,1] },
+  'D': { thumb: false, fingers: [1,0,0,0] },
+  'E': { thumb: false, fingers: [0,0,0,0] },
+  'F': { thumb: true,  fingers: [0,1,1,1] },
+  'G': { thumb: true,  fingers: [0,1,1,0] },
+  'H': { thumb: false, fingers: [1,1,0,0] },
+  'I': { thumb: false, fingers: [0,0,0,1] },
+  'K': { thumb: false, fingers: [1,0,1,1] },
+  'L': { thumb: true,  fingers: [1,0,0,0] },
+  'M': { thumb: false, fingers: [0,1,1,0] },
+  'N': { thumb: true,  fingers: [1,1,1,0] },
+  'O': { thumb: true,  fingers: [0,0,1,1] },
+  'P': { thumb: true,  fingers: [1,0,1,1] },
+  'Q': { thumb: true,  fingers: [0,1,0,0] },
+  'R': { thumb: false, fingers: [1,1,0,1] },
+  'S': { thumb: false, fingers: [0,1,0,1] },
+  'T': { thumb: false, fingers: [0,0,1,0] },
+  'U': { thumb: true,  fingers: [1,1,0,1] },
+  'V': { thumb: true,  fingers: [1,1,0,0] },
+  'W': { thumb: false, fingers: [1,1,1,0] },
+  'Y': { thumb: true,  fingers: [0,0,0,1] },
+  ' ': { thumb: true,  fingers: [1,1,1,1] },
 };
 
-const MAX_BYTES = 2 * 1024 * 1024; // 2 MB
-const dropArea = document.getElementById("drop-area");
-const fileInput = document.getElementById("fileElem");
-const resultsDiv = document.getElementById("results");
-const copyBtn = document.getElementById("copyBtn");
-
-let report = "";
-
-dropArea.addEventListener("click", () => fileInput.click());
-fileInput.addEventListener("change", handleFiles);
-
-["dragenter", "dragover"].forEach(eventName => {
-  dropArea.addEventListener(eventName, e => {
-    e.preventDefault();
-    e.stopPropagation();
-    dropArea.style.background = "#eef";
-  });
-});
-
-["dragleave", "drop"].forEach(eventName => {
-  dropArea.addEventListener(eventName, e => {
-    e.preventDefault();
-    e.stopPropagation();
-    dropArea.style.background = "";
-  });
-});
-
-dropArea.addEventListener("drop", e => {
-  handleFiles({ target: { files: e.dataTransfer.files } });
-});
-
-function handleFiles(e) {
-  const files = e.target.files;
-  resultsDiv.textContent = ""; 
-  report = "";
-
-  for (let file of files) {
-    if (file.size > MAX_BYTES) {
-      const msg = `⚠️ Skipping ${file.name} (too large: ${(file.size/1024/1024).toFixed(2)} MB)\n\n`;
-      resultsDiv.textContent += msg;
-      report += msg;
-      continue;
+function classifyLetter(f) {
+  const thumb = f.thumb;
+  const fingers = [Number(f.index), Number(f.middle), Number(f.ring), Number(f.pinky)];
+  for (const [letter, pattern] of Object.entries(LETTER_SIGNS)) {
+    if (thumb === pattern.thumb && JSON.stringify(fingers) === JSON.stringify(pattern.fingers)) {
+      return letter;
     }
+  }
+  return null;
+}
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const content = reader.result;
-      const hits = findMatches(content);
+function onResults(results) {
+  if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+    const lm = results.multiHandLandmarks[0];
+    const fingers = getFingerStates(lm);
 
-      if (hits.length > 0) {
-        let msg = `⚠️ ${file.name} contains possible API keys:\n`;
-        hits.forEach(h => {
-          msg += `   Line ${h.line} – ${h.name}: ${h.sample}\n`;
-        });
-        msg += "\n";
-        resultsDiv.textContent += msg;
-        report += msg;
-      } else {
-        const msg = `✅ ${file.name}: No API keys found\n\n`;
-        resultsDiv.textContent += msg;
-        report += msg;
-      }
-      copyBtn.style.display = "inline-block";
-    };
-    reader.readAsText(file);
+    const fingerList = [
+      Number(fingers.thumb),
+      Number(fingers.index),
+      Number(fingers.middle),
+      Number(fingers.ring),
+      Number(fingers.pinky)
+    ];
+    document.getElementById("fingers").textContent = "Finger State: " + fingerList.join(", ");
+
+    const letter = classifyLetter(fingers);
+    if (letter && letter !== lastLetter) {
+      currentWord += letter;
+      lastLetter = letter;
+    } else if (!letter) {
+      lastLetter = "";
+    }
+    document.getElementById("word").textContent = "Current Word: " + currentWord;
   }
 }
 
-function findMatches(content) {
-  const lines = content.split(/\r?\n/);
-  const hits = [];
-  for (let i = 0; i < lines.length; i++) {
-    for (const [name, regex] of Object.entries(patterns)) {
-      regex.lastIndex = 0; 
-      const matches = lines[i].match(regex);
-      if (matches) {
-        matches.forEach(m => {
-          hits.push({
-            name,
-            line: i + 1,
-            sample: m.slice(0, 6) + "•••"
-          });
-        });
-      }
-    }
-  }
-  return hits;
-}
-
-// Copy report to clipboard
-copyBtn.addEventListener("click", () => {
-  navigator.clipboard.writeText(report).then(() => {
-    copyBtn.textContent = "Copied!";
-    setTimeout(() => (copyBtn.textContent = "Copy Report"), 1500);
-  });
+const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+hands.setOptions({
+  maxNumHands: 1,
+  minDetectionConfidence: 0.5,
+  minTrackingConfidence: 0.5
 });
+hands.onResults(onResults);
+
+const camera = new Camera(videoElement, {
+  onFrame: async () => {
+    await hands.send({image: videoElement});
+  },
+  width: 640,
+  height: 480
+});
+camera.start();
