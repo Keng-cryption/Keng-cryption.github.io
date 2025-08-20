@@ -48,8 +48,6 @@ function classifyLetter(f) {
 // Setup MediaPipe Hands
 const videoElement = document.getElementById("video");
 const canvasElement = document.getElementById("canvas");
-canvasElement.width = 480;
-canvasElement.height = 360;
 const ctx = canvasElement.getContext("2d");
 
 const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
@@ -58,7 +56,9 @@ hands.setOptions({maxNumHands:1, minDetectionConfidence:0.5, minTrackingConfiden
 hands.onResults(results => {
   ctx.save();
   ctx.clearRect(0,0,canvasElement.width,canvasElement.height);
-  ctx.drawImage(results.image, 0,0, canvasElement.width, canvasElement.height);
+  
+  // Draw video frame
+  ctx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
 
   if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
     const lm = results.multiHandLandmarks[0];
@@ -77,7 +77,7 @@ hands.onResults(results => {
     }
     document.getElementById("word").textContent = "Current Word: " + currentWord;
 
-    // Draw landmarks
+    // Draw hand landmarks
     drawConnectors(ctx, lm, HAND_CONNECTIONS, {color:'#00FF00', lineWidth:2});
     drawLandmarks(ctx, lm, {color:'#FF0000', lineWidth:1});
   }
