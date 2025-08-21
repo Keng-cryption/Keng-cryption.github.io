@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 3000;
 
 // Your GitHub Personal Access Token (PAT)
 // Keep this secret! Do NOT put it in frontend code
-const GITHUB_TOKEN = 'YOUR_PERSONAL_ACCESS_TOKEN';
+const GITHUB_TOKEN = 'Iv23liAUGkafK6P2NupP';
 
 // Regex patterns for API keys
 const API_KEY_PATTERNS = {
