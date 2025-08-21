@@ -1,54 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Folder & File API Key Scanner</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin: 20px;
-    }
-    #drop-area {
-      border: 3px dashed #666;
-      border-radius: 10px;
-      width: 500px;
-      height: 200px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      color: #666;
-      background: white;
-      margin-bottom: 20px;
-    }
-    #drop-area.highlight {
-      border-color: #0b85e8;
-      background: #e0f7ff;
-    }
-    #results {
-      width: 500px;
-    }
-    .file-item {
-      background: #fff;
-      padding: 10px;
-      margin-bottom: 5px;
-      border-radius: 5px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    .found { color: red; font-weight: bold; }
-    .not-found { color: green; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Folder & File API Key Scanner</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 20px;
+}
+#drop-area {
+  border: 3px dashed #666;
+  border-radius: 10px;
+  width: 500px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #666;
+  background: white;
+  margin-bottom: 20px;
+}
+#results { width: 500px; }
+.file-item { background: #fff; padding: 10px; margin-bottom: 5px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);}
+.found { color: red; font-weight: bold; }
+.not-found { color: green; }
+</style>
 </head>
 <body>
-  <h2>Drag & Drop Files or Folders Here</h2>
-  <div id="drop-area">Drop files/folders here or click to select</div>
-  <input type="file" id="fileElem" multiple webkitdirectory directory style="display:none">
-  <div id="results"></div>
-
-  <script src="main.js"></script>
+<h2>Drag & Drop Files or Select Folder</h2>
+<div id="drop-area">Click to select folder</div>
+<input type="file" id="fileElem" webkitdirectory directory multiple style="display:none">
+<div id="results"></div>
+<script src="main.js"></script>
 </body>
 </html>
