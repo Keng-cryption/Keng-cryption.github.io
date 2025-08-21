@@ -1,8 +1,9 @@
 const dropArea = document.getElementById('drop-area');
 const fileElem = document.getElementById('fileElem');
-const fileList = document.getElementById('file-list');
+const results = document.getElementById('results');
+const keywordInput = document.getElementById('keyword');
 
-// Highlight on drag
+// Drag & Drop highlight
 ['dragenter', 'dragover'].forEach(eventName => {
   dropArea.addEventListener(eventName, (e) => {
     e.preventDefault();
@@ -19,34 +20,44 @@ const fileList = document.getElementById('file-list');
   }, false);
 });
 
-// Handle drop
+// Drop handler
 dropArea.addEventListener('drop', (e) => {
   const files = e.dataTransfer.files;
   handleFiles(files);
 });
 
-// Click to open file selector
-dropArea.addEventListener('click', () => {
-  fileElem.click();
-});
+// Click to select
+dropArea.addEventListener('click', () => fileElem.click());
+fileElem.addEventListener('change', () => handleFiles(fileElem.files));
 
-fileElem.addEventListener('change', () => {
-  handleFiles(fileElem.files);
-});
-
-// Display files
+// File processing
 function handleFiles(files) {
-  fileList.innerHTML = ''; // Clear previous
-  Array.from(files).forEach(file => {
-    const item = document.createElement('div');
-    item.classList.add('file-item');
-    item.textContent = `File: ${file.name} (${file.size} bytes)`;
-    fileList.appendChild(item);
+  results.innerHTML = '';
+  const keyword = keywordInput.value.trim();
+  if (!keyword) {
+    alert('Please enter a keyword to search!');
+    return;
+  }
 
-    // Optional: read file content
+  Array.from(files).forEach(file => {
     const reader = new FileReader();
     reader.onload = () => {
-      console.log(`Content of ${file.name}:`, reader.result);
+      const content = reader.result;
+      const lines = content.split(/\r?\n/);
+      const fileDiv = document.createElement('div');
+      fileDiv.classList.add('file-item');
+      let html = `<strong>${file.name}</strong><br>`;
+
+      lines.forEach((line, idx) => {
+        if (line.includes(keyword)) {
+          html += `<span class="found">Line ${idx+1}: Found</span><br>`;
+        } else {
+          html += `<span class="not-found">Line ${idx+1}: Not found</span><br>`;
+        }
+      });
+
+      fileDiv.innerHTML = html;
+      results.appendChild(fileDiv);
     };
     reader.readAsText(file);
   });
