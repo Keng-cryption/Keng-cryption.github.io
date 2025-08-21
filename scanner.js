@@ -3,7 +3,7 @@ import { fetch } from 'wix-fetch';
 import { getSecret } from 'wix-secrets-backend';
 
 export async function chatWithGPT(history) {
-  const apiKey = await getSecret("openai_api_key");
+  const apiKey = await getSecret("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");
 
   const messages = [
     { role: "system", content: "You are a friendly and helpful assistant for a website." },
