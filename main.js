@@ -2,7 +2,7 @@ const dropArea = document.getElementById('drop-area');
 const fileElem = document.getElementById('fileElem');
 const results = document.getElementById('results');
 
-// Drag & Drop highlight
+// Highlight for drag & drop
 ['dragenter', 'dragover'].forEach(eventName => {
   dropArea.addEventListener(eventName, (e) => {
     e.preventDefault();
@@ -19,26 +19,47 @@ const results = document.getElementById('results');
   }, false);
 });
 
-// Drop handler
+// Handle drop
 dropArea.addEventListener('drop', (e) => {
-  const files = e.dataTransfer.files;
-  handleFiles(files);
+  const items = e.dataTransfer.items;
+  const files = [];
+
+  // Convert DataTransferItemList to File[]
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i].webkitGetAsEntry();
+    if (item) readEntry(item, files);
+  }
+
+  setTimeout(() => handleFiles(files), 500); // small delay to collect all
 });
 
 // Click to select
 dropArea.addEventListener('click', () => fileElem.click());
-fileElem.addEventListener('change', () => handleFiles(fileElem.files));
+fileElem.addEventListener('change', () => handleFiles(Array.from(fileElem.files)));
 
-// Simple API key detection patterns
+// Recursively read folders
+function readEntry(entry, fileList) {
+  if (entry.isFile) {
+    entry.file(file => fileList.push(file));
+  } else if (entry.isDirectory) {
+    const dirReader = entry.createReader();
+    dirReader.readEntries(entries => {
+      entries.forEach(e => readEntry(e, fileList));
+    });
+  }
+}
+
+// API key patterns
 const apiKeyPatterns = [
-  /sk-[A-Za-z0-9]{48,}/g, // OpenAI key
-  /[A-Za-z0-9]{32,}/g     // Generic alphanumeric key (optional)
+  /sk-[A-Za-z0-9]{48,}/g, // OpenAI
+  /[A-Za-z0-9]{32,}/g     // Generic
 ];
 
 function handleFiles(files) {
   results.innerHTML = '';
+  if (!files.length) return;
 
-  Array.from(files).forEach(file => {
+  files.forEach(file => {
     const reader = new FileReader();
     reader.onload = () => {
       const content = reader.result;
@@ -48,14 +69,9 @@ function handleFiles(files) {
       let html = `<strong>${file.name}</strong><br>`;
 
       lines.forEach((line, idx) => {
-        let found = false;
-        apiKeyPatterns.forEach(pattern => {
-          if (pattern.test(line)) {
-            found = true;
-          }
-        });
-        html += found 
-          ? `<span class="found">Line ${idx+1}: API key detected!</span><br>` 
+        let found = apiKeyPatterns.some(pattern => pattern.test(line));
+        html += found
+          ? `<span class="found">Line ${idx+1}: API key detected!</span><br>`
           : `<span class="not-found">Line ${idx+1}: No key</span><br>`;
       });
 
