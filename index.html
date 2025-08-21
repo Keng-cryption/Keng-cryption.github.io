@@ -3,36 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Drag & Drop File Upload</title>
+  <title>Drag & Drop File Checker</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-      background: #f0f0f0;
+      justify-content: flex-start;
+      margin: 20px;
     }
     #drop-area {
       border: 3px dashed #666;
       border-radius: 10px;
       width: 400px;
-      height: 200px;
+      height: 150px;
       display: flex;
       align-items: center;
       justify-content: center;
       text-align: center;
       color: #666;
       background: white;
+      margin-bottom: 20px;
     }
     #drop-area.highlight {
       border-color: #0b85e8;
       background: #e0f7ff;
     }
-    #file-list {
-      margin-top: 20px;
+    #results {
       width: 400px;
     }
     .file-item {
@@ -42,13 +40,16 @@
       border-radius: 5px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
+    .found { color: green; }
+    .not-found { color: red; }
   </style>
 </head>
 <body>
   <h2>Drag & Drop Files Here</h2>
   <div id="drop-area">Drop files here or click to select</div>
   <input type="file" id="fileElem" multiple style="display:none">
-  <div id="file-list"></div>
+  <input type="text" id="keyword" placeholder="Keyword to search" style="margin-bottom:10px; width: 400px;">
+  <div id="results"></div>
 
   <script src="main.js"></script>
 </body>
