@@ -1,7 +1,6 @@
 const dropArea = document.getElementById('drop-area');
 const fileElem = document.getElementById('fileElem');
 const results = document.getElementById('results');
-const keywordInput = document.getElementById('keyword');
 
 // Drag & Drop highlight
 ['dragenter', 'dragover'].forEach(eventName => {
@@ -30,14 +29,14 @@ dropArea.addEventListener('drop', (e) => {
 dropArea.addEventListener('click', () => fileElem.click());
 fileElem.addEventListener('change', () => handleFiles(fileElem.files));
 
-// File processing
+// Simple API key detection patterns
+const apiKeyPatterns = [
+  /sk-[A-Za-z0-9]{48,}/g, // OpenAI key
+  /[A-Za-z0-9]{32,}/g     // Generic alphanumeric key (optional)
+];
+
 function handleFiles(files) {
   results.innerHTML = '';
-  const keyword = keywordInput.value.trim();
-  if (!keyword) {
-    alert('Please enter a keyword to search!');
-    return;
-  }
 
   Array.from(files).forEach(file => {
     const reader = new FileReader();
@@ -49,11 +48,15 @@ function handleFiles(files) {
       let html = `<strong>${file.name}</strong><br>`;
 
       lines.forEach((line, idx) => {
-        if (line.includes(keyword)) {
-          html += `<span class="found">Line ${idx+1}: Found</span><br>`;
-        } else {
-          html += `<span class="not-found">Line ${idx+1}: Not found</span><br>`;
-        }
+        let found = false;
+        apiKeyPatterns.forEach(pattern => {
+          if (pattern.test(line)) {
+            found = true;
+          }
+        });
+        html += found 
+          ? `<span class="found">Line ${idx+1}: API key detected!</span><br>` 
+          : `<span class="not-found">Line ${idx+1}: No key</span><br>`;
       });
 
       fileDiv.innerHTML = html;
