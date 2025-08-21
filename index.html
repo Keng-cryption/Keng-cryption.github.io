@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Drag & Drop API Key Scanner</title>
+  <title>Folder & File API Key Scanner</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -15,8 +15,8 @@
     #drop-area {
       border: 3px dashed #666;
       border-radius: 10px;
-      width: 400px;
-      height: 150px;
+      width: 500px;
+      height: 200px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -30,7 +30,7 @@
       background: #e0f7ff;
     }
     #results {
-      width: 400px;
+      width: 500px;
     }
     .file-item {
       background: #fff;
@@ -44,9 +44,9 @@
   </style>
 </head>
 <body>
-  <h2>Drag & Drop Files Here</h2>
-  <div id="drop-area">Drop files here or click to select</div>
-  <input type="file" id="fileElem" multiple style="display:none">
+  <h2>Drag & Drop Files or Folders Here</h2>
+  <div id="drop-area">Drop files/folders here or click to select</div>
+  <input type="file" id="fileElem" multiple webkitdirectory directory style="display:none">
   <div id="results"></div>
 
   <script src="main.js"></script>
