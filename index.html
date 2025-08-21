@@ -3,14 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Drag & Drop File Checker</title>
+  <title>Drag & Drop API Key Scanner</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
       margin: 20px;
     }
     #drop-area {
@@ -40,15 +39,14 @@
       border-radius: 5px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-    .found { color: green; }
-    .not-found { color: red; }
+    .found { color: red; font-weight: bold; }
+    .not-found { color: green; }
   </style>
 </head>
 <body>
   <h2>Drag & Drop Files Here</h2>
   <div id="drop-area">Drop files here or click to select</div>
   <input type="file" id="fileElem" multiple style="display:none">
-  <input type="text" id="keyword" placeholder="Keyword to search" style="margin-bottom:10px; width: 400px;">
   <div id="results"></div>
 
   <script src="main.js"></script>
