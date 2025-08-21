@@ -1,43 +1,43 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GitHub API Key Scanner</title>
-<style>
-  body { font-family: Arial, sans-serif; padding: 20px; }
-  input, button { padding: 10px; font-size: 1em; }
-  #results { margin-top: 20px; white-space: pre-wrap; max-height: 600px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; }
-</style>
-</head>
-<body>
-<h2>Scan a GitHub Repo for API Keys</h2>
-<input type="text" id="repoUrl" placeholder="Enter GitHub repo URL" size="60">
-<button id="scanBtn">Scan Repo</button>
-<div id="results"></div>
+<div id="chat">
+  <div id="chat-log" style="height:200px; overflow:auto; border:1px solid #ccc; padding:8px;"></div>
+  <input id="chat-input" placeholder="Type a message..." style="width:70%;">
+  <button onclick="sendMessage()">Send</button>
+  <hr>
+  <input id="screenshot-input" placeholder="Enter URL for screenshot" style="width:70%;">
+  <button onclick="takeScreenshot()">Screenshot</button>
+  <div id="screenshot-output" style="margin-top:10px;"></div>
+</div>
 
-<script>
-document.getElementById('scanBtn').addEventListener('click', async () => {
-    const url = document.getElementById('repoUrl').value.trim();
-    const resultsDiv = document.getElementById('results');
-    resultsDiv.textContent = 'Scanning repo... This may take a while.';
+<script type="module">
+import { chatWithGPT, screenshotURL } from 'backend/chat';
 
-    try {
-        const res = await fetch('/scan-repo', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ repoUrl: url })
-        });
-        const data = await res.json();
-        if (data.error) {
-            resultsDiv.textContent = 'Error: ' + data.error;
-        } else {
-            resultsDiv.textContent = data.results.join('\n\n');
-        }
-    } catch (err) {
-        resultsDiv.textContent = 'Error: ' + err.message;
-    }
-});
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const message = input.value.trim();
+  if (!message) return;
+  input.value = "";
+
+  // Show user message
+  document.getElementById('chat-log').innerHTML += `<p><b>You:</b> ${message}</p>`;
+
+  // Send to backend
+  const result = await chatWithGPT(message);
+  const reply = result.choices[0].message.content;
+  document.getElementById('chat-log').innerHTML += `<p><b>Bot:</b> ${reply}</p>`;
+}
+
+async function takeScreenshot() {
+  const url = document.getElementById('screenshot-input').value.trim();
+  if (!url) return;
+
+  document.getElementById('screenshot-output').innerHTML = "Loading screenshot...";
+
+  try {
+    const base64Image = await screenshotURL(url);
+    document.getElementById('screenshot-output').innerHTML = `<img src="data:image/png;base64,${base64Image}" style="max-width:100%;">`;
+  } catch (err) {
+    document.getElementById('screenshot-output').innerHTML = "Failed to take screenshot.";
+    console.error(err);
+  }
+}
 </script>
-</body>
-</html>
